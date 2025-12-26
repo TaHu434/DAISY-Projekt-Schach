@@ -290,8 +290,7 @@ class Board(BoardBase):
                 if king == self.get_cell(cell):
                     return True
         return False
-                
-        return False
+    
 
     def evaluate(self):
         """
