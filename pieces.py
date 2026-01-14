@@ -227,6 +227,10 @@ class Rook(Piece):  # Turm
                 row += row_dir
                 col += col_dir
                 new_position = (row, col)
+
+                if not self.board.is_valid_cell(new_position):
+                    front_clear = False
+                    continue
                 
                 if self.board.cell_is_valid_and_empty(new_position):
                     reachable_cells.append(new_position)
@@ -269,27 +273,21 @@ class Knight(Piece):  # Springer
         directions = {(2, 1), (2, -1), (1, 2), (-1, 2), (-2, 1), (-2, -1), (1, -2), (-1, -2)}
 
         for dir in directions:
-            front_clear = True
             row_dir, col_dir = dir
             row, col = self.cell
             
-            while front_clear:
-                row += row_dir
-                col += col_dir
-                new_position = (row, col)
+            row += row_dir
+            col += col_dir
+            new_position = (row, col)
+            
+            if self.board.cell_is_valid_and_empty(new_position):
+                reachable_cells.append(new_position)
+            
+            elif self.board.is_valid_cell(new_position):
+                piece = self.board.get_cell(new_position)
                 
-                if self.board.cell_is_valid_and_empty(new_position):
+                if piece.is_white() != self.is_white():
                     reachable_cells.append(new_position)
-                
-                elif self.board.is_valid_cell(new_position):
-                    piece = self.board.get_cell(new_position)
-                    
-                    if piece.is_white() == self.is_white():
-                        front_clear = False
-
-                    else:                                       #gegner ist hier
-                        reachable_cells.append(new_position)
-                        front_clear = False
         
         return reachable_cells
 
@@ -326,6 +324,10 @@ class Bishop(Piece):  # Läufer
                 row += row_dir
                 col += col_dir
                 new_position = (row, col)
+
+                if not self.board.is_valid_cell(new_position):
+                    front_clear = False
+                    continue
                 
                 if self.board.cell_is_valid_and_empty(new_position):
                     reachable_cells.append(new_position)
@@ -376,6 +378,10 @@ class Queen(Piece):  # Königin
                 row += row_dir
                 col += col_dir
                 new_position = (row, col)
+
+                if not self.board.is_valid_cell(new_position):
+                    front_clear = False
+                    continue
                 
                 if self.board.cell_is_valid_and_empty(new_position):
                     reachable_cells.append(new_position)

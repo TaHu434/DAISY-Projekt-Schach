@@ -267,6 +267,7 @@ class Board(BoardBase):
         for piece in same_color_pieces:
             if isinstance(piece, King):      #ist das der könig
                 return piece
+                
         return None
 
     def is_king_check(self, white):
