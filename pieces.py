@@ -168,6 +168,30 @@ class Pawn(Piece):  # Bauer
         :return: A list of reachable cells this pawn could move into.
         """
         # TODO: Implement a method that returns all cells this piece can enter in its next move
+        reachable_cells = []
+        row, col = self.cell
+
+        if self.white == True:
+            if self.board.cell_is_valid_and_empty((row+1, col)):
+                reachable_cells.append((row+1, col))
+                if row == 1 and self.board.cell_is_valid_and_empty((3, col)):
+                    reachable_cells.append((3, col))
+            if self.can_hit_on_cell((row+1, col+1)):
+                reachable_cells.append((row+1, col+1))
+            if self.can_hit_on_cell((row+1, col-1)):
+                reachable_cells.append((row+1, col-1))
+
+        if self.white == False:
+            if self.board.cell_is_valid_and_empty((row-1, col)):
+                reachable_cells.append((row-1, col))
+                if row == 6 and self.board.cell_is_valid_and_empty((4, col)):
+                    reachable_cells.append((4, col))
+            if self.can_hit_on_cell((row-1, col+1)):
+                reachable_cells.append((row-1, col+1))
+            if self.can_hit_on_cell((row-1, col-1)):
+                reachable_cells.append((row-1, col-1))
+
+        return reachable_cells
 
 
 class Rook(Piece):  # Turm
@@ -406,7 +430,7 @@ class King(Piece):  # König
             elif self.board.is_valid_cell(new_position):
                 piece = self.board.get_cell(new_position)
                 
-                if piece.is_white() == False:
+                if piece.is_white() != self.is_white():
                     reachable_cells.append(new_position)
         
         return reachable_cells
