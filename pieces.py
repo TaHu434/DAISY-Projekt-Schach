@@ -68,33 +68,14 @@ class Piece:
         elif isinstance(self, Knight):
             value += 3
         elif isinstance(self, Bishop):
-            value += 4
+            value += 3
         elif isinstance(self, Rook):
             value += 5
         elif isinstance(self, Queen):
             value += 9
         elif isinstance(self, King):
             value += 100
-
-        enemy_pieces = self.board.iterate_cells_with_pieces(not self.is_white())
-        reachable_position = self.get_reachable_cells()
-
-        for position in reachable_position:
-            for enemy_piece in enemy_pieces:
-                if enemy_piece.cell == position:
-                    if isinstance(enemy_piece, Pawn):
-                        value += 1
-                    elif isinstance(enemy_piece, Knight):
-                        value += 3
-                    elif isinstance(enemy_piece, Bishop):
-                        value += 4
-                    elif isinstance(enemy_piece, Rook):
-                        value += 5
-                    elif isinstance(enemy_piece, Queen):
-                        value += 9
-                    elif isinstance(enemy_piece, King):
-                        value += 100
-                    
+            
         return value
 
 
@@ -171,25 +152,24 @@ class Pawn(Piece):  # Bauer
         reachable_cells = []
         row, col = self.cell
 
-        if self.white == True:
-            if self.board.cell_is_valid_and_empty((row+1, col)):
-                reachable_cells.append((row+1, col))
-                if row == 1 and self.board.cell_is_valid_and_empty((3, col)):
-                    reachable_cells.append((3, col))
-            if self.can_hit_on_cell((row+1, col+1)):
-                reachable_cells.append((row+1, col+1))
-            if self.can_hit_on_cell((row+1, col-1)):
-                reachable_cells.append((row+1, col-1))
+        direction = 1 if self.white else -1
 
-        if self.white == False:
-            if self.board.cell_is_valid_and_empty((row-1, col)):
-                reachable_cells.append((row-1, col))
-                if row == 6 and self.board.cell_is_valid_and_empty((4, col)):
-                    reachable_cells.append((4, col))
-            if self.can_hit_on_cell((row-1, col+1)):
-                reachable_cells.append((row-1, col+1))
-            if self.can_hit_on_cell((row-1, col-1)):
-                reachable_cells.append((row-1, col-1))
+        start_row = 1 if self.white else 6
+
+        one_step_forward = (row + direction, col)
+
+        if self.board.cell_is_valid_and_empty(one_step_forward):
+            reachable_cells.append(one_step_forward)
+
+            two_steps_forward = (row + (2 * direction), col)
+            if row == start_row and self.board.cell_is_valid_and_empty(two_steps_forward):
+                reachable_cells.append(two_steps_forward)
+
+        for diag_col in [col - 1, col + 1]:
+            diag_target = (row + direction, diag_col)
+
+            if self.can_hit_on_cell(diag_target):
+                reachable_cells.append(diag_target)
 
         return reachable_cells
 

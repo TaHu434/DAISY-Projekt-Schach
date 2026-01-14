@@ -94,6 +94,29 @@ def evaluate_all_possible_moves(board, minMaxArg, maximumNumberOfMoves = 10):
     more moves possible (in most situations there are), only return the top (or worst). Hint: Slice the list after sorting. 
     """
     # TODO: Implement the method according to the above description
+    
+    evaluated_moves = []
+    playing_as_white = minMaxArg.playAsWhite
+    my_pieces = board.iterate_cells_with_pieces(playing_as_white)
+
+    for piece in my_pieces:
+        valid_targets = piece.get_valid_cells()
+        start_cell = piece.cell
+
+        for target_cell in valid_targets:
+            captured_piece = board.get_cell(target_cell)
+            board.set_cell(target_cell, piece)
+            score = board.evaluate()
+            move = Move(piece, target_cell, score)
+            evaluated_moves.append(move)
+            board.set_cell(start_cell, piece)
+
+            if captured_piece is not None:
+                board.set_cell(target_cell, captured_piece)
+
+    evaluated_moves.sort(key=lambda m: m.score, reverse=playing_as_white)
+
+    return evaluated_moves[:maximumNumberOfMoves]
 
 
 def minMax(board, minMaxArg):
@@ -164,6 +187,30 @@ def minMax(board, minMaxArg):
     """
     # TODO: Implement the Mini-Max algorithm
 
+    if (possible_moves := evaluate_all_possible_moves(board, minMaxArg)):
+        if minMaxArg.depth > 1:
+            for move in possible_moves:
+
+                curr_piece = move.piece
+
+                old_pos = curr_piece.cell
+                new_pos = move.cell
+                stored_piece = board.get_cell(new_pos)
+
+                board.set_cell(new_pos, curr_piece)
+                move.score = minMax_cached(board, minMaxArg.next()).score
+                board.set_cell(old_pos, curr_piece)
+
+                if stored_piece:
+                    board.set_cell(new_pos, stored_piece)
+
+            possible_moves.sort(key=lambda move: move.score, reverse=minMaxArg.playAsWhite)
+
+    else:
+        return Move(None, None, score=-10_000 if minMaxArg.playAsWhite else 10_000)
+
+    return possible_moves[0]
+
 
 def suggest_random_move(board):
     """
@@ -179,6 +226,25 @@ def suggest_random_move(board):
     If there are no legal moves at all, return None.
     """
     # TODO: Implement a valid random move
+
+    pieces_with_valid_moves = [piece for piece in board.iterate_cells_with_pieces(True) if piece.get_valid_cells()]
+
+    if pieces_with_valid_moves:
+        random_piece = random.choice(pieces_with_valid_moves)
+        new_pos = random.choice(random_piece.get_valid_cells())
+
+        old_pos = random_piece.cell
+        stored_piece = board.get_cell(new_pos)
+        board.set_cell(new_pos, random_piece)
+        score = board.evaluate()
+        board.set_cell(old_pos, random_piece)
+
+        if stored_piece:
+            board.set_cell(new_pos, stored_piece)
+
+        return Move(random_piece, new_pos, score)
+
+    return None
 
 
 
