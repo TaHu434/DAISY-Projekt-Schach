@@ -186,6 +186,29 @@ def minMax(board, minMaxArg):
     :rtype: :py:class:`Move`
     """
     # TODO: Implement the Mini-Max algorithm
+    if (possible_moves := evaluate_all_possible_moves(board, minMaxArg)):
+        if minMaxArg.depth > 1:
+            for move in possible_moves:
+
+                curr_piece = move.piece
+
+                old_pos = curr_piece.cell
+                new_pos = move.cell
+                stored_piece = board.get_cell(new_pos)
+
+                board.set_cell(new_pos, curr_piece)
+                move.score = minMax_cached(board, minMaxArg.next()).score
+                board.set_cell(old_pos, curr_piece)
+
+                if stored_piece:
+                    board.set_cell(new_pos, stored_piece)
+
+            possible_moves.sort(key=lambda move: move.score, reverse=minMaxArg.playAsWhite)
+
+    else:
+        return Move(None, None, score=-10_000 if minMaxArg.playAsWhite else 10_000)
+
+    return possible_moves[0]
 
 
 def suggest_random_move(board):
@@ -202,6 +225,24 @@ def suggest_random_move(board):
     If there are no legal moves at all, return None.
     """
     # TODO: Implement a valid random move
+    pieces_with_valid_moves = [piece for piece in board.iterate_cells_with_pieces(True) if piece.get_valid_cells()]
+
+    if pieces_with_valid_moves:
+        random_piece = random.choice(pieces_with_valid_moves)
+        new_pos = random.choice(random_piece.get_valid_cells())
+
+        old_pos = random_piece.cell
+        stored_piece = board.get_cell(new_pos)
+        board.set_cell(new_pos, random_piece)
+        score = board.evaluate()
+        board.set_cell(old_pos, random_piece)
+
+        if stored_piece:
+            board.set_cell(new_pos, stored_piece)
+
+        return Move(random_piece, new_pos, score)
+
+    return None
     
 
 def suggest_move(board):
