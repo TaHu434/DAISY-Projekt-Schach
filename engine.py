@@ -94,7 +94,6 @@ def evaluate_all_possible_moves(board, minMaxArg, maximumNumberOfMoves = 10):
     more moves possible (in most situations there are), only return the top (or worst). Hint: Slice the list after sorting. 
     """
     # TODO: Implement the method according to the above description
-    
     evaluated_moves = []
     playing_as_white = minMaxArg.playAsWhite
     my_pieces = board.iterate_cells_with_pieces(playing_as_white)
