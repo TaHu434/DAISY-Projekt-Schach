@@ -99,19 +99,30 @@ def evaluate_all_possible_moves(board, minMaxArg, maximumNumberOfMoves = 10):
     my_pieces = board.iterate_cells_with_pieces(playing_as_white)
 
     for piece in my_pieces:
-        valid_targets = piece.get_valid_cells()
+        valid_cells = piece.get_valid_cells()
         start_cell = piece.cell
 
-        for target_cell in valid_targets:
-            captured_piece = board.get_cell(target_cell)
-            board.set_cell(target_cell, piece)
+        for cell in valid_cells:
+            # target feld merken
+            captured_piece = board.get_cell(cell)
+            
+            # zug/move
+            board.set_cell(cell, piece)
+
+            # bewerten
             score = board.evaluate()
-            move = Move(piece, target_cell, score)
+            
+            # safe
+            move = Move(piece, cell, score)
             evaluated_moves.append(move)
+            
+            # Rückgängig machen
             board.set_cell(start_cell, piece)
 
             if captured_piece is not None:
-                board.set_cell(target_cell, captured_piece)
+                board.set_cell(cell, captured_piece)
+            else:
+                board.set_cell(cell, None)
 
     evaluated_moves.sort(key=lambda m: m.score, reverse=playing_as_white)
 
@@ -185,29 +196,56 @@ def minMax(board, minMaxArg):
     :rtype: :py:class:`Move`
     """
     # TODO: Implement the Mini-Max algorithm
-    if (possible_moves := evaluate_all_possible_moves(board, minMaxArg)):
-        if minMaxArg.depth > 1:
-            for move in possible_moves:
+    
+    # möglichen Züge, aktuelle Situation holen und bewerten
+    possible_moves = evaluate_all_possible_moves(board, minMaxArg)
 
-                curr_piece = move.piece
+    # keine Züge mehr / Schachmatt
+    if len(possible_moves) == 0:
+        if minMaxArg.playAsWhite:
+            return Move(None, None, -10000) # Weiß verliert
+        else:
+            return Move(None, None, 10000)  # Schwarz verliert
 
-                old_pos = curr_piece.cell
-                new_pos = move.cell
-                stored_piece = board.get_cell(new_pos)
+    if minMaxArg.depth > 1:
+        for move in possible_moves:
+            # Zug auf dem Board, Antwort des Gegners zu berechnen
+            piece = move.piece
+            original_pos = piece.cell
+            target_pos = move.cell
+            
+            captured_piece = board.get_cell(target_pos)
 
-                board.set_cell(new_pos, curr_piece)
-                move.score = minMax_cached(board, minMaxArg.next()).score
-                board.set_cell(old_pos, curr_piece)
+            # Zug machen
+            board.set_cell(target_pos, piece)
 
-                if stored_piece:
-                    board.set_cell(new_pos, stored_piece)
+            # beste Antwortzug des Gegners?
+            # Score vom Ergebnis
+            answer_move = minMax_cached(board, minMaxArg.next())
+            move.score = answer_move.score
 
-            possible_moves.sort(key=lambda move: move.score, reverse=minMaxArg.playAsWhite)
+            # rückgängig
+            board.set_cell(original_pos, piece)
+            if captured_piece:
+                board.set_cell(target_pos, captured_piece)
+            else:
+                board.set_cell(target_pos, None)
 
-    else:
-        return Move(None, None, score=-10_000 if minMaxArg.playAsWhite else 10_000)
+        # Liste neu sortieren, wegen Scores veränderung
+        possible_moves.sort(key=lambda m: m.score, reverse=minMaxArg.playAsWhite)
 
-    return possible_moves[0]
+    # wenn mehrere Züge gleich gut
+    best_score = possible_moves[0].score
+    best_moves = []
+    
+    # Züge fast gleichen Score haben
+    for m in possible_moves:
+        if m.score == best_score:
+            best_moves.append(m)
+        else:
+            break
+            
+    return random.choice(best_moves)
 
 
 def suggest_random_move(board):
@@ -224,24 +262,40 @@ def suggest_random_move(board):
     If there are no legal moves at all, return None.
     """
     # TODO: Implement a valid random move
-    pieces_with_valid_moves = [piece for piece in board.iterate_cells_with_pieces(True) if piece.get_valid_cells()]
+    white_pieces = []
+    for piece in board.iterate_cells_with_pieces(True):
+        white_pieces.append(piece)
+    
+    # sich überhaupt bewegen können
+    movable_pieces = []
+    for piece in white_pieces:
+        if len(piece.get_valid_cells()) > 0:
+            movable_pieces.append(piece)
 
-    if pieces_with_valid_moves:
-        random_piece = random.choice(pieces_with_valid_moves)
-        new_pos = random.choice(random_piece.get_valid_cells())
+    if not movable_pieces:
+        return None
 
-        old_pos = random_piece.cell
-        stored_piece = board.get_cell(new_pos)
-        board.set_cell(new_pos, random_piece)
-        score = board.evaluate()
-        board.set_cell(old_pos, random_piece)
+    random_piece = random.choice(movable_pieces)
+    
+    # zufälliges Ziel für Figur
+    valid_cells = random_piece.get_valid_cells()
+    random_move = random.choice(valid_cells)
 
-        if stored_piece:
-            board.set_cell(new_pos, stored_piece)
+    # simulieren
+    old_pos = random_piece.cell
+    captured = board.get_cell(random_move)
 
-        return Move(random_piece, new_pos, score)
+    board.set_cell(random_move, random_piece)
+    score = board.evaluate()
 
-    return None
+    # Reset
+    board.set_cell(old_pos, random_piece)
+    if captured:
+        board.set_cell(random_move, captured)
+    else:
+        board.set_cell(random_move, None)
+
+    return Move(random_piece, random_move, score)
     
 
 def suggest_move(board):
